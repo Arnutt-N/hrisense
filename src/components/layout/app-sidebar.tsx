@@ -1,63 +1,85 @@
-'use client'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CalendarDays, AlertTriangle, BarChart3, Users, Bell, Settings, Shield } from 'lucide-react'
-import { cn } from '@/lib/utils/cn'
+"use client";
 
-const navItems = [
-  { href: '/dashboard', label: 'แดชบอร์ดหลัก', icon: LayoutDashboard },
-  { href: '/dashboard/retirement', label: 'พยากรณ์เกษียณ', icon: CalendarDays },
-  { href: '/dashboard/risk', label: 'วิเคราะห์ความเสี่ยง', icon: AlertTriangle },
-  { href: '/dashboard/vacancy', label: 'วิเคราะห์อัตรากำลัง', icon: BarChart3 },
-  { href: '/personnel', label: 'ข้อมูลบุคลากร', icon: Users },
-  { href: '/alerts', label: 'การแจ้งเตือน', icon: Bell },
-  { href: '/settings', label: 'ตั้งค่า', icon: Settings },
-]
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Home,
+  LayoutGrid,
+  ShieldAlert,
+  Users,
+  Network,
+  BarChart3,
+  Bell,
+  Settings,
+  LogOut,
+  type LucideIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils/cn";
+import { BrandLogo } from "./brand-logo";
 
-export function AppSidebar() {
-  const pathname = usePathname()
+type NavItem = { href: string; label: string; icon: LucideIcon; match?: string[] };
+
+const navItems: NavItem[] = [
+  { href: "/", label: "หน้าหลัก", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
+  { href: "/risk", label: "วิเคราะห์ความเสี่ยง", icon: ShieldAlert },
+  { href: "/personnel", label: "กำลังคนและตำแหน่ง", icon: Users, match: ["/personnel", "/profile"] },
+  { href: "/succession", label: "แผนสืบทอดตำแหน่ง", icon: Network },
+  { href: "/executive", label: "รายงานสำหรับผู้บริหาร", icon: BarChart3 },
+  { href: "/alerts", label: "แจ้งเตือน", icon: Bell },
+  { href: "/settings", label: "ตั้งค่าและระบบ", icon: Settings },
+];
+
+export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+
+  const isActive = (item: NavItem) => {
+    if (item.href === "/") return pathname === "/";
+    const targets = item.match ?? [item.href];
+    return targets.some((t) => pathname === t || pathname.startsWith(t + "/"));
+  };
 
   return (
-    <aside className="w-64 bg-card border-r flex flex-col shrink-0">
+    <div className="flex h-full w-64 flex-col bg-sidebar text-sidebar-foreground">
       {/* Logo */}
-      <div className="p-4 border-b">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="font-bold text-foreground text-lg leading-tight">HRiSENSE</h1>
-            <p className="text-xs text-muted-foreground">กระทรวงยุติธรรม</p>
-          </div>
-        </div>
+      <div className="flex h-[68px] items-center border-b border-white/10 px-5">
+        <BrandLogo />
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-3 space-y-1">
-        {navItems.map(item => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+      {/* Nav */}
+      <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-5">
+        {navItems.map((item) => {
+          const active = isActive(item);
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                isActive
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                "flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors",
+                active
+                  ? "bg-sidebar-accent text-white shadow-sm"
+                  : "text-sidebar-foreground/80 hover:bg-white/5 hover:text-white",
               )}
             >
-              <item.icon className="w-5 h-5 shrink-0" />
-              {item.label}
+              <item.icon className="h-[18px] w-[18px] shrink-0" />
+              <span className="truncate">{item.label}</span>
             </Link>
-          )
+          );
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t text-xs text-muted-foreground text-center">
-        HRiSENSE v0.1.0
+      {/* Logout */}
+      <div className="border-t border-white/10 px-3 py-4">
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <LogOut className="h-[18px] w-[18px] shrink-0" />
+          ออกจากระบบ
+        </button>
       </div>
-    </aside>
-  )
+    </div>
+  );
 }
