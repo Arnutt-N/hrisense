@@ -388,13 +388,15 @@ function nextPosCode(orgId: string) {
 function buildVacancyAnalysis() {
   const out: any[] = []
   let posIdx = 7
-  const quotaPattern = [8, 7, 6, 5, 4]
+  // ปรับ quota ให้สอดคล้องกับกำลังพล 300 คน (รวมแล้วควรประมาณ 330-340 เพื่อให้มีอัตราว่าง 10%)
+  const quotaPattern = [4, 4, 4, 4, 3]
   for (const orgId of Object.keys(divConfig)) {
     const cfg = divConfig[orgId]
     const org = mockOrganizations.find(o => o.id === orgId)!
     cfg.positions.forEach((pos, i) => {
       const quota = quotaPattern[i]
-      const vacancy = rng() < 0.45 ? randInt(1, 2) : 0
+      // สุ่มอัตราว่างประมาณ 10-15%
+      const vacancy = rng() < 0.15 ? 1 : 0
       const occupancy = quota - vacancy
       const isCritical = i < 2
       const hasSuccession = isCritical ? rng() < 0.5 : rng() < 0.3
