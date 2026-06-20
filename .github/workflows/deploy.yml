@@ -8,6 +8,10 @@ name: CD Pipeline (Deploy)
 #   SUPABASE_ACCESS_TOKEN, SUPABASE_PROD_PROJECT_REF, SUPABASE_PROD_DB_PASSWORD
 #   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
 #   NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
+#
+# NOTE: secrets context ไม่สามารถใช้ใน job-level `if:` ได้ (parse-time error
+# "Unrecognized named-value: 'secrets'"). จึงใช้ job `preflight` map secrets -> env
+# ใน step แล้ว export เป็น outputs ให้ job อื่น gate ด้วย needs.preflight.outputs.*
 
 on:
   push:
@@ -18,15 +22,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # ─── Step 0: Preflight — ตรวจว่ามี secrets ครบไหม ─────────────────────
+  preflight:
+    name: Preflight (check secrets)
+    runs-on: ubuntu-latest
+    outputs:
+      has_supabase: ${{ steps.check.outputs.has_supabase }}
+      has_vercel: ${{ steps.check.outputs.has_vercel }}
+    steps:
+      - id: check
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROD_PROJECT_REF: ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+          SUPABASE_PROD_DB_PASSWORD: ${{ secrets.SUPABASE_PROD_DB_PASSWORD }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_PROD_PROJECT_REF" ] && [ -n "$SUPABASE_PROD_DB_PASSWORD" ]; then
+            echo "has_supabase=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_supabase=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "has_vercel=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_vercel=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # ─── Step 1: Migrate Database ─────────────────────────────────────────
   migrate:
     name: Migrate Database
     runs-on: ubuntu-latest
-    # Skip ถ้าไม่มี secrets สำหรับ Supabase
-    if: >-
-      ${{ secrets.SUPABASE_ACCESS_TOKEN != '' &&
-          secrets.SUPABASE_PROD_PROJECT_REF != '' &&
-          secrets.SUPABASE_PROD_DB_PASSWORD != '' }}
+    needs: preflight
+    if: needs.preflight.outputs.has_supabase == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -54,13 +83,9 @@ jobs:
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
-    needs: migrate
-    # Skip ถ้าไม่มี secrets สำหรับ Vercel
-    if: >-
-      ${{ always() &&
-          secrets.VERCEL_TOKEN != '' &&
-          secrets.VERCEL_ORG_ID != '' &&
-          secrets.VERCEL_PROJECT_ID != '' }}
+    needs: [preflight, migrate]
+    # Deploy frontend ถ้ามี Vercel secrets — รันแม้ migrate จะถูก skip/fail
+    if: always() && needs.preflight.outputs.has_vercel == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -90,9 +115,8 @@ jobs:
   check-secrets:
     name: Check Deploy Configuration
     runs-on: ubuntu-latest
-    if: >-
-      ${{ secrets.SUPABASE_ACCESS_TOKEN == '' ||
-          secrets.VERCEL_TOKEN == '' }}
+    needs: preflight
+    if: needs.preflight.outputs.has_supabase != 'true' || needs.preflight.outputs.has_vercel != 'true'
     steps:
       - name: Notify — Deploy skipped (secrets not configured)
         run: |
