@@ -1,5 +1,9 @@
 name: Deploy Preview
 
+# NOTE: secrets context ใช้ใน job-level `if:` ไม่ได้ (parse-time error
+# "Unrecognized named-value: 'secrets'"). จึงใช้ job `preflight` map secrets -> env
+# ใน step แล้ว export เป็น output ให้ job อื่น gate ด้วย needs.preflight.outputs.*
+
 on:
   pull_request:
     branches: [main, develop]
@@ -9,15 +13,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ─── Preflight — ตรวจว่ามี Vercel secrets ครบไหม ─────────────────────
+  preflight:
+    name: Preflight (check secrets)
+    runs-on: ubuntu-latest
+    outputs:
+      has_vercel: ${{ steps.check.outputs.has_vercel }}
+    steps:
+      - id: check
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "has_vercel=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_vercel=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # ─── Deploy Preview to Vercel ──────────────────────────────────────────
   deploy-preview:
     name: Deploy Preview
     runs-on: ubuntu-latest
-    # Skip ถ้าไม่มี Vercel secrets
-    if: >-
-      ${{ secrets.VERCEL_TOKEN != '' &&
-          secrets.VERCEL_ORG_ID != '' &&
-          secrets.VERCEL_PROJECT_ID != '' }}
+    needs: preflight
+    if: needs.preflight.outputs.has_vercel == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -57,10 +77,8 @@ jobs:
   notify-skipped:
     name: Check Preview Configuration
     runs-on: ubuntu-latest
-    if: >-
-      ${{ secrets.VERCEL_TOKEN == '' ||
-          secrets.VERCEL_ORG_ID == '' ||
-          secrets.VERCEL_PROJECT_ID == '' }}
+    needs: preflight
+    if: needs.preflight.outputs.has_vercel != 'true'
     steps:
       - name: Notify — Preview skipped
         run: |
