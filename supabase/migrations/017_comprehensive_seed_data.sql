@@ -256,11 +256,11 @@ BEGIN
     v_risk_score := (v_retirement_risk * 0.4 + v_transfer_risk * 0.3 + v_talent_risk * 0.3);
 
     -- Risk level (no 'critical' in enum, use 'red' for highest)
-    IF v_risk_score >= 75 THEN
+    IF v_risk_score > 80 THEN
+      v_risk_level := 'critical';
+    ELSIF v_risk_score > 60 THEN
       v_risk_level := 'red';
-    ELSIF v_risk_score >= 50 THEN
-      v_risk_level := 'red';
-    ELSIF v_risk_score >= 25 THEN
+    ELSIF v_risk_score > 40 THEN
       v_risk_level := 'amber';
     ELSE
       v_risk_level := 'green';

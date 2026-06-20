@@ -398,9 +398,9 @@ export default async function DashboardPage({
                       <td className="py-3 px-4 text-muted-foreground">{p.position_name || '—'}</td>
                       <td className="py-3 px-4">
                         <span className={`font-bold tabular-nums ${
-                          p.overall_risk_score >= 75 ? 'text-red-600' :
-                          p.overall_risk_score >= 50 ? 'text-red-500' :
-                          p.overall_risk_score >= 25 ? 'text-amber-600' : 'text-green-600'
+                          p.overall_risk_score > 80 ? 'text-red-600' :
+                          p.overall_risk_score > 60 ? 'text-red-500' :
+                          p.overall_risk_score > 40 ? 'text-amber-600' : 'text-green-600'
                         }`}>
                           {p.overall_risk_score?.toFixed(0) || '—'}
                         </span>

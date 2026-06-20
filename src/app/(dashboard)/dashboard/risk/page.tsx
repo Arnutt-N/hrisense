@@ -263,8 +263,8 @@ export default async function RiskPage() {
                     <td className="py-3 px-4 text-right">
                       <span className={cn(
                         'font-bold font-mono',
-                        p.overall_risk_score >= 75 && 'text-destructive',
-                        p.overall_risk_score >= 50 && p.overall_risk_score < 75 && 'text-red-600',
+                        p.overall_risk_score > 80 && 'text-destructive',
+                        p.overall_risk_score > 60 && p.overall_risk_score <= 80 && 'text-red-600',
                         p.overall_risk_score >= 25 && p.overall_risk_score < 50 && 'text-amber-600',
                         p.overall_risk_score < 25 && 'text-green-600'
                       )}>

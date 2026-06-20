@@ -150,9 +150,9 @@ SELECT
   ) AS vacancy_rate,
   -- Risk level
   CASE
-    WHEN AVG(prs.overall_score) >= 75 THEN 'critical'
-    WHEN AVG(prs.overall_score) >= 50 THEN 'red'
-    WHEN AVG(prs.overall_score) >= 25 THEN 'amber'
+    WHEN AVG(prs.overall_score) > 80 THEN 'critical'
+    WHEN AVG(prs.overall_score) > 60 THEN 'red'
+    WHEN AVG(prs.overall_score) > 40 THEN 'amber'
     ELSE 'green'
   END AS risk_level,
   -- Retirement counts

@@ -189,9 +189,9 @@ const eduLevels = ['bachelors', 'bachelors', 'bachelors', 'masters', 'masters', 
 const eduDegree: Record<string, string> = { bachelors: 'ศิลปศาสตรบัณฑิต', masters: 'วิทยาศาสตรมหาบัณฑิต', doctorate: 'ปรัชญาดุษฎีบัณฑิต' }
 
 function riskLevelFromScore(score: number): 'green' | 'amber' | 'red' | 'critical' {
-  if (score >= 75) return 'critical'
-  if (score >= 50) return 'red'
-  if (score >= 25) return 'amber'
+  if (score > 80) return 'critical'
+  if (score > 60) return 'red'
+  if (score > 40) return 'amber'
   return 'green'
 }
 

@@ -22,9 +22,9 @@ export const riskLabelTh: Record<RiskLevel, string> = {
 }
 
 export function getRiskLevel(score: number): RiskLevel {
-  if (score >= 75) return 'critical'
-  if (score >= 50) return 'red'
-  if (score >= 25) return 'amber'
+  if (score > 80) return 'critical'
+  if (score > 60) return 'red'
+  if (score > 40) return 'amber'
   return 'green'
 }
 
