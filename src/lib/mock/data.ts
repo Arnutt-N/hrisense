@@ -273,11 +273,11 @@ const orgRiskProfile: Record<string, RiskProfile> = {
   'org-19': 'critical',  // กองประสานราชการยุติธรรมจังหวัด
 }
 
-const profileParams: Record<RiskProfile, { transferP: number; transferRange: [number, number]; talentP: number; talentRange: [number, number]; burnoutP: number; retBoost: number }> = {
-  critical: { transferP: 0.45, transferRange: [55, 82], talentP: 0.50, talentRange: [58, 88], burnoutP: 0.40, retBoost: 8 },
-  high:     { transferP: 0.30, transferRange: [48, 72], talentP: 0.35, talentRange: [50, 78], burnoutP: 0.28, retBoost: 4 },
-  mixed:    { transferP: 0.20, transferRange: [48, 72], talentP: 0.25, talentRange: [50, 78], burnoutP: 0.18, retBoost: 0 },
-  low:      { transferP: 0.08, transferRange: [8, 30],  talentP: 0.10, talentRange: [10, 35], burnoutP: 0.06, retBoost: -5 },
+const profileParams: Record<RiskProfile, { transferP: number; transferRange: [number, number]; talentP: number; talentRange: [number, number]; burnoutP: number; burnoutRange: [number, number]; retBoost: number }> = {
+  critical: { transferP: 0.55, transferRange: [60, 90], talentP: 0.55, talentRange: [65, 95], burnoutP: 0.50, burnoutRange: [60, 90], retBoost: 15 },
+  high:     { transferP: 0.35, transferRange: [50, 78], talentP: 0.40, talentRange: [55, 82], burnoutP: 0.30, burnoutRange: [50, 78], retBoost: 8 },
+  mixed:    { transferP: 0.20, transferRange: [48, 72], talentP: 0.25, talentRange: [50, 78], burnoutP: 0.18, burnoutRange: [30, 65], retBoost: 0 },
+  low:      { transferP: 0.08, transferRange: [8, 30],  talentP: 0.10, talentRange: [10, 35], burnoutP: 0.06, burnoutRange: [10, 40], retBoost: -5 },
 }
 
 function generatePersonnel() {
@@ -319,15 +319,17 @@ function generatePersonnel() {
       const talentLossRisk = rng() < profile.talentP ? rand(...profile.talentRange) : rand(10, 38)
 
       // Burnout inputs — behavioral/performance data YTD.
-      // Profile controls the probability of high-burnout band.
+      // Profile controls the probability and intensity of high-burnout band.
       const burnoutProne = rng() < profile.burnoutP
+      const [burnoutLow, burnoutHigh] = profile.burnoutRange
+      const burnoutScale = burnoutHigh > 70 ? 'extreme' : burnoutHigh > 50 ? 'high' : 'normal'
       const burnoutInputs: BurnoutInputs = {
-        late_days_ytd: burnoutProne ? randInt(6, 18) : randInt(0, 6),
-        absent_days_ytd: burnoutProne ? randInt(4, 12) : randInt(0, 4),
-        performance_score: burnoutProne ? rand(55, 72) : rand(72, 95),
-        overtime_hours_ytd: burnoutProne ? rand(120, 280) : rand(0, 90),
-        training_hours_ytd: burnoutProne ? rand(0, 12) : rand(12, 48),
-        workload_index: burnoutProne ? rand(65, 95) : rand(30, 70),
+        late_days_ytd: burnoutProne ? (burnoutScale === 'extreme' ? randInt(12, 20) : randInt(6, 18)) : randInt(0, 6),
+        absent_days_ytd: burnoutProne ? (burnoutScale === 'extreme' ? randInt(8, 15) : randInt(4, 12)) : randInt(0, 4),
+        performance_score: burnoutProne ? (burnoutScale === 'extreme' ? rand(45, 62) : rand(55, 72)) : rand(72, 95),
+        overtime_hours_ytd: burnoutProne ? (burnoutScale === 'extreme' ? rand(180, 300) : rand(120, 280)) : rand(0, 90),
+        training_hours_ytd: burnoutProne ? (burnoutScale === 'extreme' ? rand(0, 6) : rand(0, 12)) : rand(12, 48),
+        workload_index: burnoutProne ? (burnoutScale === 'extreme' ? rand(75, 98) : rand(65, 95)) : rand(30, 70),
       }
       const burnoutRisk = computeBurnout(burnoutInputs)
 
