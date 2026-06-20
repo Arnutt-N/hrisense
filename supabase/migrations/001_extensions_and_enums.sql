@@ -1,4 +1,4 @@
-﻿-- HRiSENSE Database Schema
+-- HRiSENSE Database Schema
 -- Migration 001: Extensions, Enums
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -7,7 +7,7 @@ CREATE EXTENSION IF NOT EXISTS "ltree";
 
 -- Core Enums
 CREATE TYPE personnel_status AS ENUM ('active', 'transferred_out', 'transferred_in', 'retired', 'resigned', 'deceased', 'dismissed', 'suspended');
-CREATE TYPE readiness_level AS ENUM ('ready_now', 'ready_soon', 'ready_future', 'needs_development', 'not_ready');
+CREATE TYPE readiness_level AS ENUM ('ready_now', 'ready_1_2_years', 'ready_3_5_years', 'needs_development', 'not_ready');
 CREATE TYPE import_status AS ENUM ('pending', 'processing', 'completed', 'completed_with_errors', 'failed');
 CREATE TYPE risk_level AS ENUM ('green', 'amber', 'red');
 CREATE TYPE user_role AS ENUM ('admin', 'viewer');

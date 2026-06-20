@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
-
 @layer base {
   :root {
     --background: 210 20% 98%;
@@ -24,16 +22,31 @@
     --input: 214 20% 90%;
     --ring: 215 52% 24%;
     --radius: 0.625rem;
-    --font-thai: 'Noto Sans Thai', sans-serif;
-    --font-sans: 'Noto Sans Thai', 'Inter', system-ui, sans-serif;
   }
-}
-
-@layer base {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-thai);
+    font-family: var(--font-thai), 'Inter', system-ui, sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  /* Thai script needs more vertical breathing room than Latin */
+  p, li { line-height: 1.65; }
+}
+
+/* Respect reduced motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

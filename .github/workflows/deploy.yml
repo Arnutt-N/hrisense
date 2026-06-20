@@ -1,0 +1,76 @@
+name: CD Pipeline (Deploy)
+
+# Runs AFTER a PR is merged to main:
+#   1. Apply database migrations to production Supabase
+#   2. Deploy frontend to Vercel
+#
+# Required GitHub Secrets:
+#   SUPABASE_PROD_URL          — URL ของ Supabase production (self-hosted หรือ cloud)
+#   SUPABASE_PROD_SERVICE_KEY  — Service role key ของ production
+#   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  # ─── Step 1: Migrate Database ─────────────────────────────────────────
+  migrate:
+    name: Migrate Database
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to production Supabase
+        run: |
+          supabase link \
+            --project-ref "${{ secrets.SUPABASE_PROD_PROJECT_REF }}" \
+            --password "${{ secrets.SUPABASE_PROD_DB_PASSWORD }}"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Apply migrations to production
+        run: supabase db push --linked
+
+      - name: Verify migration
+        run: |
+          echo "=== Migration applied successfully ==="
+          supabase db diff --linked --schema public || true
+
+  # ─── Step 2: Deploy Frontend ──────────────────────────────────────────
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: migrate
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Deploy to Vercel (production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./

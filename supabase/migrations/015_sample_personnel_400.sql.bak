@@ -1,0 +1,292 @@
+-- ============================================================================
+-- HRiSENSE: Generate 400 Sample Personnel Records
+-- Creates diverse personnel with varied risk levels, retirement dates, positions
+-- ============================================================================
+
+-- Thai name pools for realistic generation
+DO $$
+DECLARE
+  -- Prefix pools
+  prefixes_th TEXT[] := ARRAY['นาย', 'นาง', 'นางสาว', 'นายแพทย์', 'พันตำรวจโท', 'ร้อยเอก', 'ร้อยโท'];
+  prefixes_en TEXT[] := ARRAY['Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Pol.Maj.', 'Capt.', 'Lt.'];
+
+  -- First name pools (male)
+  first_names_male TEXT[] := ARRAY[
+    'สมชาย', 'สมหญิง', 'ประยุทธ', 'วิชัย', 'สุชาติ', 'พิชัย', 'อนุชา', 'สมศักดิ์',
+    'วีระ', 'ธนพล', 'กิตติ', 'สุรชัย', 'ประเสริฐ', 'วิทยา', 'ธนา', 'อนุชา',
+    'พงษ์ศักดิ์', 'ชาติชาย', 'สุรเกียรติ', 'เทอดไท', 'วีรวัฒน์', 'ธนวัฒน์', 'กิตติพงษ์',
+    'ปิยะ', 'สมพงษ์', 'สุริยัน', 'ชยพล', 'ณัฐวุฒิ', 'ภานุวัฒน์', 'สิทธิพร'
+  ];
+
+  -- First name pools (female)
+  first_names_female TEXT[] := ARRAY[
+    'สมหญิง', 'วิไล', 'สุภาพร', 'ประไพ', 'วรรณา', 'มาลี', 'อำไพ', 'สุภาพ',
+    'นภา', 'ทิพย์วรรณ', 'กนกพร', 'ศิริพร', 'พรทิพย์', 'วิภา', 'นุชจร', 'สมจิตร',
+    'ปวีณา', 'จิราพร', 'สุทธินี', 'อรุณี', 'พิมลรัตน์', 'นภาพร', 'ศิวพร',
+    'พัชรี', 'จริยา', 'วนิดา', 'นิตยา', 'พรทิพย์', 'อรพิม', 'สิริกัลยา'
+  ];
+
+  -- Last name pools
+  last_names TEXT[] := ARRAY[
+    'จันทร์แก้ว', 'ศรีสุข', 'วงศ์ธรรม', 'ทองดี', 'เพชรพลอย', 'สุขสวัสดิ์', 'วงศ์สุวรรณ',
+    'ศรีวงศ์', 'ทองจันทร์', 'แก้วมณี', 'สุวรรณศรี', 'พงษ์พันธุ์', 'ชาติสกุล', 'วงศ์ศิริ',
+    'ไทยสุวัฒน์', 'สยามกุล', 'นครินทร์', 'พิทยากรณ์', 'สุขุมวิท', 'วงศ์ปรีชา',
+    'ธรรมรักษ์', 'ศรีวิไล', 'ทองพูน', 'แก้วขวัญ', 'วงศ์ไพศาล', 'สุขเกษม', 'เจริญผล',
+    'ศิริสุข', 'พรประเสริฐ', 'ไทยพาณิชย์', 'สุวรรณรัตน์', 'วงศ์เสถียร', 'ชาติเจริญ', 'พิพัฒนกุล'
+  ];
+
+  -- Organization IDs (from existing seed data)
+  org_ids UUID[] := ARRAY[
+    'a0000001-0000-0000-0000-000000000002'::UUID, -- DOP
+    'a0000001-0000-0000-0000-000000000003'::UUID, -- DOR
+    'a0000001-0000-0000-0000-000000000004'::UUID, -- DOL
+    'a0000001-0000-0000-0000-000000000005'::UUID, -- DIP
+    'a0000001-0000-0000-0000-000000000006'::UUID, -- DOJ
+    'a0000001-0000-0000-0000-000000000010'::UUID, -- DOR-DIV1
+    'a0000001-0000-0000-0000-000000000011'::UUID, -- DOR-DIV2
+    'a0000001-0000-0000-0000-000000000020'::UUID, -- MOJ-DIV1
+    'a0000001-0000-0000-0000-000000000021'::UUID  -- MOJ-DIV2
+  ];
+
+  -- Variables for loop
+  i INTEGER;
+  is_male BOOLEAN;
+  prefix_idx INTEGER;
+  first_name_idx INTEGER;
+  last_name_idx INTEGER;
+  org_idx INTEGER;
+  birth_date_val DATE;
+  govt_start_date_val DATE;
+  salary_val NUMERIC;
+  education_val TEXT;
+  risk_score_val NUMERIC;
+  retirement_risk_val NUMERIC;
+  transfer_risk_val NUMERIC;
+  talent_loss_risk_val NUMERIC;
+  overall_risk_val NUMERIC;
+  risk_level_val TEXT;
+  has_successor BOOLEAN;
+  is_critical BOOLEAN;
+
+BEGIN
+  RAISE NOTICE 'Generating 400 sample personnel records...';
+
+  FOR i IN 1..400 LOOP
+    -- Random gender (60% male, 40% female for realistic distribution)
+    is_male := RANDOM() < 0.6;
+
+    -- Select prefix
+    IF is_male THEN
+      prefix_idx := FLOOR(RANDOM() * 4) + 1; -- First 4 prefixes are male
+    ELSE
+      prefix_idx := FLOOR(RANDOM() * 3) + 3; -- Last 3 are female
+    END IF;
+
+    -- Select first name
+    IF is_male THEN
+      first_name_idx := FLOOR(RANDOM() * ARRAY_LENGTH(first_names_male, 1)) + 1;
+    ELSE
+      first_name_idx := FLOOR(RANDOM() * ARRAY_LENGTH(first_names_female, 1)) + 1;
+    END IF;
+
+    -- Select last name
+    last_name_idx := FLOOR(RANDOM() * ARRAY_LENGTH(last_names, 1)) + 1;
+
+    -- Select organization (weighted towards larger departments)
+    org_idx := FLOOR(RANDOM() * ARRAY_LENGTH(org_ids, 1)) + 1;
+
+    -- Generate birth date (age 25-58, with some nearing retirement)
+    -- 70% age 25-45, 20% age 46-55, 10% age 56-58 (nearing retirement)
+    IF RANDOM() < 0.7 THEN
+      birth_date_val := CURRENT_DATE - (INTERVAL '25 years' + (RANDOM() * INTERVAL '20 years'));
+    ELSIF RANDOM() < 0.9 THEN
+      birth_date_val := CURRENT_DATE - (INTERVAL '46 years' + (RANDOM() * INTERVAL '9 years'));
+    ELSE
+      birth_date_val := CURRENT_DATE - (INTERVAL '56 years' + (RANDOM() * INTERVAL '2 years'));
+    END IF;
+
+    -- Government start date (1-35 years ago)
+    govt_start_date_val := CURRENT_DATE - (INTERVAL '1 year' + (RANDOM() * INTERVAL '34 years'));
+
+    -- Salary (20,000 - 120,000 THB based on age/experience)
+    salary_val := 20000 + (EXTRACT(YEAR FROM age(CURRENT_DATE, govt_start_date_val)) * 2500) + (RANDOM() * 15000);
+
+    -- Education level (weighted distribution)
+    IF RANDOM() < 0.4 THEN
+      education_val := 'bachelors';
+    ELSIF RANDOM() < 0.7 THEN
+      education_val := 'masters';
+    ELSIF RANDOM() < 0.85 THEN
+      education_val := 'bachelors';
+    ELSE
+      education_val := 'doctorate';
+    END IF;
+
+    -- Calculate risk scores
+    -- Retirement risk: higher for older employees
+    retirement_risk_val := LEAST(100, GREATEST(0,
+      (EXTRACT(YEAR FROM age(CURRENT_DATE, birth_date_val)) - 50) * 8 + (RANDOM() * 20)
+    ));
+
+    -- Transfer risk: random with some pattern
+    transfer_risk_val := RANDOM() * 60 + (CASE WHEN RANDOM() < 0.2 THEN 40 ELSE 0 END);
+
+    -- Talent loss risk: higher for younger educated employees
+    talent_loss_risk_val := CASE
+      WHEN EXTRACT(YEAR FROM age(CURRENT_DATE, birth_date_val)) < 40 AND education_val IN ('masters', 'doctorate')
+      THEN 40 + (RANDOM() * 40)
+      ELSE RANDOM() * 50
+    END;
+
+    -- Overall risk: weighted average
+    overall_risk_val := (retirement_risk_val * 0.4 + transfer_risk_val * 0.3 + talent_loss_risk_val * 0.3);
+
+    -- Determine risk level
+    risk_level_val := CASE
+      WHEN overall_risk_val >= 75 THEN 'critical'
+      WHEN overall_risk_val >= 50 THEN 'red'
+      WHEN overall_risk_val >= 25 THEN 'amber'
+      ELSE 'green'
+    END;
+
+    -- Successor availability (30% have ready successor)
+    has_successor := RANDOM() < 0.3;
+
+    -- Critical position (20% are critical)
+    is_critical := RANDOM() < 0.2;
+
+    -- Insert personnel record
+    INSERT INTO personnel (
+      citizen_id,
+      prefix_th,
+      first_name_th,
+      last_name_th,
+      prefix_en,
+      first_name_en,
+      last_name_en,
+      birth_date,
+      birth_date_be,
+      government_start_date,
+      government_start_date_be,
+      organization_id,
+      salary,
+      education_level,
+      email,
+      phone,
+      status,
+      employee_number
+    ) VALUES (
+      -- Generate unique citizen ID (13 digits)
+      LPAD(FLOOR(RANDOM() * 9999999999999)::TEXT, 13, '0'),
+      prefixes_th[prefix_idx],
+      CASE WHEN is_male THEN first_names_male[first_name_idx] ELSE first_names_female[first_name_idx] END,
+      last_names[last_name_idx],
+      prefixes_en[prefix_idx],
+      -- English names (simplified transliteration)
+      CASE WHEN is_male THEN 'Male' ELSE 'Female' END || i,
+      'Surname' || i,
+      birth_date_val,
+      -- Buddhist Era year
+      TO_CHAR(birth_date_val + INTERVAL '543 years', 'YYYY'),
+      govt_start_date_val,
+      TO_CHAR(govt_start_date_val + INTERVAL '543 years', 'YYYY'),
+      org_ids[org_idx],
+      ROUND(salary_val, 2),
+      education_val::education_level,
+      -- Email
+      LOWER('person' || i || '@moj.go.th'),
+      -- Phone (Thai mobile format)
+      '08' || LPAD(FLOOR(RANDOM() * 99999999)::TEXT, 8, '0'),
+      'active',
+      -- Employee number
+      'MOJ' || LPAD(i::TEXT, 5, '0')
+    );
+
+    -- Insert risk assessment for this personnel
+    INSERT INTO risk_assessments (
+      personnel_id,
+      assessment_date,
+      retirement_risk,
+      transfer_risk,
+      talent_loss_risk,
+      overall_risk_score,
+      risk_level,
+      assessed_by,
+      notes
+    ) VALUES (
+      (SELECT id FROM personnel WHERE employee_number = 'MOJ' || LPAD(i::TEXT, 5, '0')),
+      CURRENT_DATE,
+      ROUND(retirement_risk_val, 2),
+      ROUND(transfer_risk_val, 2),
+      ROUND(talent_loss_risk_val, 2),
+      ROUND(overall_risk_val, 2),
+      risk_level_val,
+      'System',
+      CASE
+        WHEN risk_level_val = 'critical' THEN 'ต้องการการดูแลเร่งด่วน'
+        WHEN risk_level_val = 'red' THEN 'ความเสี่ยงสูง ต้องติดตาม'
+        WHEN risk_level_val = 'amber' THEN 'ควรเฝ้าระวัง'
+        ELSE 'ปกติ'
+      END
+    );
+
+    -- Insert succession planning record for critical positions or high retirement risk
+    IF is_critical OR retirement_risk_val > 60 THEN
+      INSERT INTO succession_plans (
+        personnel_id,
+        is_critical_position,
+        has_ready_successor,
+        succession_readiness_score,
+        last_review_date,
+        notes
+      ) VALUES (
+        (SELECT id FROM personnel WHERE employee_number = 'MOJ' || LPAD(i::TEXT, 5, '0')),
+        is_critical,
+        has_successor,
+        CASE WHEN has_successor THEN 70 + (RANDOM() * 30) ELSE RANDOM() * 40 END,
+        CURRENT_DATE - (RANDOM() * INTERVAL '180 days'),
+        CASE
+          WHEN is_critical AND NOT has_successor THEN 'ตำแหน่งสำคัญแต่ไม่มีผู้สืบทอด - ต้องเร่งพัฒนา'
+          WHEN has_successor THEN 'มีผู้สืบทอดพร้อม'
+          ELSE 'ยังไม่มีผู้สืบทอดที่เหมาะสม'
+        END
+      );
+    END IF;
+
+    -- Log progress every 50 records
+    IF i % 50 = 0 THEN
+      RAISE NOTICE 'Generated % personnel records...', i;
+    END IF;
+  END LOOP;
+
+  RAISE NOTICE 'Successfully generated 400 personnel records with risk assessments and succession plans.';
+END $$;
+
+-- ============================================================================
+-- Summary Statistics
+-- ============================================================================
+DO $$
+DECLARE
+  total_count INTEGER;
+  critical_count INTEGER;
+  red_count INTEGER;
+  amber_count INTEGER;
+  green_count INTEGER;
+  avg_retirement_risk NUMERIC;
+  with_successor_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO total_count FROM personnel;
+  SELECT COUNT(*) INTO critical_count FROM risk_assessments WHERE risk_level = 'critical';
+  SELECT COUNT(*) INTO red_count FROM risk_assessments WHERE risk_level = 'red';
+  SELECT COUNT(*) INTO amber_count FROM risk_assessments WHERE risk_level = 'amber';
+  SELECT COUNT(*) INTO green_count FROM risk_assessments WHERE risk_level = 'green';
+  SELECT AVG(retirement_risk) INTO avg_retirement_risk FROM risk_assessments;
+  SELECT COUNT(*) INTO with_successor_count FROM succession_plans WHERE has_ready_successor = true;
+
+  RAISE NOTICE '=== Summary Statistics ===';
+  RAISE NOTICE 'Total Personnel: %', total_count;
+  RAISE NOTICE 'Risk Distribution - Critical: %, Red: %, Amber: %, Green: %',
+    critical_count, red_count, amber_count, green_count;
+  RAISE NOTICE 'Average Retirement Risk: %', ROUND(avg_retirement_risk, 2);
+  RAISE NOTICE 'Personnel with Ready Successor: %', with_successor_count;
+END $$;

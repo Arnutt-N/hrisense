@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ThaiDate } from '@/components/shared/thai-date'
+import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +28,17 @@ export default async function AlertsPage() {
                 <p className="text-sm text-muted-foreground">{a.message}</p>
                 <div className="flex gap-4 mt-1 text-xs text-muted-foreground">
                   {a.organization_name && <span>{a.organization_name}</span>}
-                  {a.personnel_name && <span>{a.personnel_name}</span>}
+                  {a.personnel_name && (
+                    <span>
+                      {a.personnel_id ? (
+                        <Link href={`/personnel/${a.personnel_id}`} className="hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded text-foreground font-medium">
+                          {a.personnel_name}
+                        </Link>
+                      ) : (
+                        a.personnel_name
+                      )}
+                    </span>
+                  )}
                   <span><ThaiDate date={a.created_at} format="short"/> ({a.age_hours?.toFixed(0)} ชม.)</span>
                 </div>
               </div>

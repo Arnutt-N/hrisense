@@ -1,0 +1,162 @@
+_format_version: "2.1"
+_transform: true
+
+###
+### Consumers / Users
+###
+consumers:
+  - username: anon
+    keyauth_credentials:
+      - key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiJ9.anon-placeholder
+  - username: service_role
+    keyauth_credentials:
+      - key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.service-placeholder
+
+###
+### Access Control List
+###
+acls:
+  - consumer: anon
+    group: anon
+  - consumer: service_role
+    group: admin
+
+###
+### Dashboard
+###
+services:
+  - name: dashboard
+    url: http://studio:3000
+    routes:
+      - name: dashboard-route
+        strip_path: true
+        paths:
+          - /dashboard
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow_group:
+            - admin
+
+###
+### Auth
+###
+  - name: auth-v1
+    _comment: "GoTrue / Auth API"
+    url: http://auth:9999/
+    routes:
+      - name: auth-v1-all
+        strip_path: true
+        paths:
+          - /auth/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow_group:
+            - anon
+            - admin
+      - name: request-transformer
+        config:
+          add:
+            headers:
+              - Host:auth
+
+###
+### REST API
+###
+  - name: rest-v1
+    _comment: "PostgREST REST API"
+    url: http://rest:3000/
+    routes:
+      - name: rest-v1-all
+        strip_path: true
+        paths:
+          - /rest/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow_group:
+            - anon
+            - admin
+
+###
+### Realtime
+###
+  - name: realtime-v1
+    _comment: "Realtime API"
+    url: http://realtime:4000/socket/websocket
+    routes:
+      - name: realtime-v1-all
+        strip_path: true
+        paths:
+          - /realtime/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow_group:
+            - anon
+            - admin
+
+###
+### Storage
+###
+  - name: storage-v1
+    _comment: "Storage API"
+    url: http://storage:5000
+    routes:
+      - name: storage-v1-all
+        strip_path: true
+        paths:
+          - /storage/v1/
+    plugins:
+      - name: cors
+      - name: key-auth
+        config:
+          hide_credentials: false
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow_group:
+            - anon
+            - admin
+
+###
+### Meta (PG Metadata)
+###
+  - name: meta
+    _comment: "Postgres Metadata API"
+    url: http://meta:8080
+    routes:
+      - name: meta-all
+        strip_path: true
+        paths:
+          - /pg/
+    plugins:
+      - name: key-auth
+        config:
+          hide_credentials: true
+      - name: acl
+        config:
+          hide_groups_header: true
+          allow_group:
+            - admin

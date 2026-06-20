@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- HRiSENSE Migration 010: Database Functions
 -- ============================================================================
 
@@ -518,8 +518,10 @@ DECLARE
 BEGIN
   v_user_id := auth.uid();
 
-  SELECT email, role INTO v_email, v_role
-  FROM profiles WHERE id = v_user_id;
+  SELECT au.email, p.role INTO v_email, v_role
+  FROM profiles p
+  LEFT JOIN auth.users au ON au.id = p.id
+  WHERE p.id = v_user_id;
 
   IF TG_OP = 'INSERT' THEN
     v_new := to_jsonb(NEW);

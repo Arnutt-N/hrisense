@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- HRiSENSE Migration 012: Performance Indexes
 -- ============================================================================
 
@@ -46,8 +46,8 @@ CREATE INDEX idx_positions_org_active ON positions(organization_id, is_active);
 -- Risk indexes
 -- ============================================================================
 CREATE INDEX idx_personnel_risk_person ON personnel_risk_scores(personnel_id);
-CREATE INDEX idx_personnel_risk_score ON personnel_risk_scores(overall_score DESC);
-CREATE INDEX idx_personnel_risk_level ON personnel_risk_scores(risk_level);
+CREATE INDEX idx_personnel_risk_overall ON personnel_risk_scores(overall_score DESC);
+CREATE INDEX idx_personnel_risk_level_scores ON personnel_risk_scores(risk_level);
 CREATE INDEX idx_personnel_risk_retirement ON personnel_risk_scores(retirement_risk DESC);
 
 CREATE INDEX idx_org_risk_org ON organization_risk_summary(organization_id);

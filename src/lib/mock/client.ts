@@ -2,6 +2,10 @@ import {
   mockPersonnel, mockOrgDashboard, mockRetirementTimeline,
   mockVacancyAnalysis, mockHighRiskPersonnel, mockActiveAlerts,
   mockWorkforceComposition, mockOrganizations,
+  mockRiskDistribution, mockOrgRiskDetails, mockCriticalPositions,
+  mockSuccessionCandidates, mockOrgVacancySummary, mockCriticalVacancies,
+  mockRecruitmentPipeline, mockIdpSummary, mockTrainingRecords,
+  mockHighPotentialPersonnel,
 } from './data'
 
 class MockQueryBuilder {
@@ -28,9 +32,14 @@ class MockQueryBuilder {
       const field = this.orderByField
       const asc = this.orderByAsc
       result = [...result].sort((a: any, b: any) => {
-        const va = a[field] ?? 0
-        const vb = b[field] ?? 0
-        return asc ? va - vb : vb - va
+        const va = a[field]
+        const vb = b[field]
+        if (va == null && vb == null) return 0
+        if (va == null) return asc ? -1 : 1
+        if (vb == null) return asc ? 1 : -1
+        if (typeof va === 'number' && typeof vb === 'number') return asc ? va - vb : vb - va
+        const cmp = String(va) < String(vb) ? -1 : String(va) > String(vb) ? 1 : 0
+        return asc ? cmp : -cmp
       })
     }
     if (this.limitCount) result = result.slice(0, this.limitCount)
@@ -46,6 +55,16 @@ class MockQueryBuilder {
       'v_high_risk_personnel': mockHighRiskPersonnel,
       'v_active_alerts': mockActiveAlerts,
       'v_workforce_composition': mockWorkforceComposition,
+      'v_risk_distribution': mockRiskDistribution,
+      'v_org_risk_details': mockOrgRiskDetails,
+      'v_critical_positions': mockCriticalPositions,
+      'v_succession_candidates': mockSuccessionCandidates,
+      'v_org_vacancy_summary': mockOrgVacancySummary,
+      'v_critical_vacancies': mockCriticalVacancies,
+      'v_recruitment_pipeline': mockRecruitmentPipeline,
+      'v_idp_summary': mockIdpSummary,
+      'v_training_records': mockTrainingRecords,
+      'v_high_potential_personnel': mockHighPotentialPersonnel,
       'organizations': mockOrganizations,
       'personnel': mockPersonnel,
       'alerts': mockActiveAlerts,

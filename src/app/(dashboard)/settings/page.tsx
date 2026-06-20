@@ -15,7 +15,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-2 text-sm">
           <p><span className="text-muted-foreground">ชื่อระบบ:</span> HRiSENSE</p>
           <p><span className="text-muted-foreground">เวอร์ชัน:</span> 0.1.0</p>
-          <p><span className="text-muted-foreground">หน่วยงาน:</span> กระทรวงยุติธรรม</p>
+          <p><span className="text-muted-foreground">หน่วยงาน:</span> สำนักงานปลัดกระทรวงยุติธรรม</p>
           <p><span className="text-muted-foreground">Database:</span> Supabase (PostgreSQL)</p>
         </CardContent>
       </Card>

@@ -33,7 +33,7 @@ export default function LoginPage() {
         </div>
         <h1 className="text-2xl font-bold text-foreground">HRiSENSE</h1>
         <p className="text-sm text-muted-foreground">ระบบพยากรณ์และบริหารความเสี่ยงด้านกำลังคน</p>
-        <p className="text-xs text-muted-foreground">กระทรวงยุติธรรม</p>
+        <p className="text-xs text-muted-foreground">สำนักงานปลัดกระทรวงยุติธรรม</p>
         {isMock && <p className="text-xs text-amber-600 font-medium">🧪 โหมดทดสอบ (Mock Data)</p>}
       </div>
       <form onSubmit={handleLogin} className="space-y-4">

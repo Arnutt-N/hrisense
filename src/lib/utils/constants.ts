@@ -1,6 +1,6 @@
 export const APP_NAME = 'HRiSENSE'
 export const APP_NAME_TH = 'ระบบพยากรณ์กำลังคน'
-export const MINISTRY_NAME = 'กระทรวงยุติธรรม'
+export const MINISTRY_NAME = 'สำนักงานปลัดกระทรวงยุติธรรม'
 export const RETIREMENT_AGE = 60
 
 export const RETIREMENT_BUCKETS = [
@@ -21,7 +21,7 @@ export const POSITION_CATEGORIES_TH = [
 export const RISK_FACTORS = [
   { key: 'retirement_risk', label: 'เกษียณ', labelEn: 'Retirement' },
   { key: 'transfer_risk', label: 'โอนย้าย', labelEn: 'Transfer' },
-  { key: 'talent_loss_risk', label: 'ทาเลนท์', labelEn: 'Talent' },
+  { key: 'burnout_risk', label: 'Burnout', labelEn: 'Burnout' },
   { key: 'vacancy_risk', label: 'อัตราว่าง', labelEn: 'Vacancy' },
   { key: 'succession_risk', label: 'สืบทอด', labelEn: 'Succession' },
 ] as const

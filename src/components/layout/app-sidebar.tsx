@@ -1,7 +1,10 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, CalendarDays, AlertTriangle, BarChart3, Users, Bell, Settings, Shield } from 'lucide-react'
+import {
+  LayoutDashboard, CalendarDays, AlertTriangle, BarChart3,
+  Users, Bell, Settings, Shield, Target, BookOpen
+} from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 
 const navItems = [
@@ -9,6 +12,8 @@ const navItems = [
   { href: '/dashboard/retirement', label: 'พยากรณ์เกษียณ', icon: CalendarDays },
   { href: '/dashboard/risk', label: 'วิเคราะห์ความเสี่ยง', icon: AlertTriangle },
   { href: '/dashboard/vacancy', label: 'วิเคราะห์อัตรากำลัง', icon: BarChart3 },
+  { href: '/dashboard/succession', label: 'แผนสืบทอดตำแหน่ง', icon: Target },
+  { href: '/dashboard/idp', label: 'แผนพัฒนารายบุคคล', icon: BookOpen },
   { href: '/personnel', label: 'ข้อมูลบุคลากร', icon: Users },
   { href: '/alerts', label: 'การแจ้งเตือน', icon: Bell },
   { href: '/settings', label: 'ตั้งค่า', icon: Settings },
@@ -27,7 +32,7 @@ export function AppSidebar() {
           </div>
           <div>
             <h1 className="font-bold text-foreground text-lg leading-tight">HRiSENSE</h1>
-            <p className="text-xs text-muted-foreground">กระทรวงยุติธรรม</p>
+            <p className="text-xs text-muted-foreground">สำนักงานปลัดกระทรวงยุติธรรม</p>
           </div>
         </div>
       </div>
@@ -56,7 +61,7 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div className="p-4 border-t text-xs text-muted-foreground text-center">
-        HRiSENSE v0.1.0
+        HRiSENSE v0.2.0
       </div>
     </aside>
   )

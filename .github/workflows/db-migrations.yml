@@ -1,0 +1,63 @@
+name: Database Migrations
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'supabase/migrations/**'
+
+concurrency:
+  group: db-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Test migrations on a fresh database
+  test-migrations:
+    name: Test Migrations
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - run: supabase start
+      - run: supabase db push
+
+      - name: Verify seeded data
+        run: |
+          echo "=== Seed Data Check ==="
+          supabase db diff --schema public --use-migra
+
+      - if: always()
+        run: supabase stop
+
+  # Generate migration diff for review
+  migration-diff:
+    name: Migration Diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - run: supabase start
+
+      - name: Generate diff
+        run: |
+          supabase db diff --schema public --use-migra --file migration-diff || true
+          echo "=== Migration Diff ==="
+          cat migration-diff.sql 2>/dev/null || echo "(no diff)"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: migration-diff
+          path: migration-diff.sql
+          retention-days: 7
+
+      - if: always()
+        run: supabase stop
