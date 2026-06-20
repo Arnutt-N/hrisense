@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { FilterBar } from '@/components/filters/filter-bar'
 import { RetirementTrendChart } from '@/components/charts/retirement-trend-chart'
+import { getRiskLevel } from '@/lib/utils/risk-colors'
 import Link from 'next/link'
 import {
   Users, TrendingDown, CalendarClock, AlertTriangle,
@@ -20,18 +21,10 @@ const RISK_LABEL_TH: Record<string, string> = {
   green: 'ปกติ',
 }
 
-// Map selected risk labels (critical/red/amber/green) to score ranges.
-// v_high_risk_personnel exposes overall_risk_score; the label system uses
-// getRiskLevel(score), so filtering by score keeps the filter honest.
+// Use getRiskLevel() as single source of truth for risk thresholds.
 function matchesRiskFilter(score: number, levels: string[]): boolean {
   if (levels.length === 0) return true
-  return levels.some((lvl) => {
-    if (lvl === 'critical') return score >= 75
-    if (lvl === 'red') return score >= 50 && score < 75
-    if (lvl === 'amber') return score >= 25 && score < 50
-    if (lvl === 'green') return score < 25
-    return false
-  })
+  return levels.includes(getRiskLevel(score))
 }
 
 function asString(value: string | string[] | undefined): string {
