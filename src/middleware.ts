@@ -9,8 +9,10 @@ export async function middleware(request: NextRequest) {
   const isProtected = protectedRoutes.some((r) => pathname.startsWith(r))
   const isAuth = authRoutes.some((r) => pathname.startsWith(r))
 
-  // Mock mode: skip auth checks entirely (no Supabase call needed)
-  if (process.env.NEXT_PUBLIC_USE_MOCK === 'true') {
+  // Mock mode: skip auth checks entirely (no Supabase call needed).
+  // Server-only flag (no NEXT_PUBLIC_ prefix) and NEVER honored in production,
+  // so a stray flag cannot disable the auth gate on a live deployment.
+  if (process.env.USE_MOCK === 'true' && process.env.NODE_ENV !== 'production') {
     return NextResponse.next({ request })
   }
 
@@ -35,10 +37,22 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session
+  // Refresh session. On auth-service failure, fail safe: send protected routes
+  // to /login instead of throwing (an unhandled throw here 500s every request).
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser()
+
+  if (error) {
+    if (isProtected) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('redirectedFrom', pathname)
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
 
   // Redirect unauthenticated users away from protected routes
   if (isProtected && !user) {
