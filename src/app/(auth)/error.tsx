@@ -7,6 +7,9 @@ export default function AuthError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  // Log full error; never render raw error.message to users.
+  console.error('Auth error:', error)
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5">
       <div className="w-full max-w-md p-8 text-center space-y-4">

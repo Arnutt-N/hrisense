@@ -7,6 +7,9 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  // Log full error server/client-side; never render raw error.message to users.
+  console.error('Global error:', error)
+
   return (
     <html>
       <body>
