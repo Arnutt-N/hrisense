@@ -62,12 +62,17 @@ Properties:
 - Idempotent: re-running sets the same option; no data/schema change.
 - `service_role` is unaffected — it bypasses RLS by nature.
 
-### 2.3 View inventory (20)
+### 2.3 View inventory (22)
 From `013_views.sql` (11):
 `v_personnel_overview`, `v_org_dashboard`, `v_retirement_timeline`, `v_vacancy_analysis`, `v_high_risk_personnel`, `v_succession_status`, `v_training_summary`, `v_evaluation_history`, `v_active_alerts`, `v_workforce_composition`, `v_import_status`.
 
 From `016_additional_views.sql` (9):
 `v_critical_positions`, `v_succession_candidates`, `v_risk_distribution`, `v_org_risk_details`, `v_idp_summary`, `v_training_records`, `v_high_potential_personnel`, `v_org_vacancy_summary`, `v_critical_vacancies`.
+
+From `021_add_burnout_risk.sql` (2):
+`v_burnout_analysis`, `v_org_burnout_summary`.
+
+> Corrected during Phase 0 pre-flight: grep of `CREATE ... VIEW` across all migrations surfaced 2 additional burnout views in `021` that the original count of 20 missed. All 22 must be flipped to close the leak path completely.
 
 ### 2.4 Test plan (real Supabase stack)
 1. `supabase start` → run migrations `001`–`025` → seed.
